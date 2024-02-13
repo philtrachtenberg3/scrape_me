@@ -1,8 +1,17 @@
 import requests
+import json
 from bs4 import BeautifulSoup
 
 # URL of the page with the listings
 listings_url = 'https://swappa.com/bp/sellworld/listings'
+
+# Read carrier list from JSON file
+with open('carriers.json', 'r') as file:
+    carriers = json.load(file)
+
+# Read condition list from JSON file
+with open('product_conditions.json', 'r') as file:
+    product_conditions = json.load(file)
 
 # Fetch the content of the webpage
 response = requests.get(listings_url)
@@ -34,9 +43,9 @@ for listing in listings:
     # Check if the span elements contain condition and carrier information
     for span in span_elements:
         text = span.get_text(strip=True)
-        if text.lower() == 'good' or text.lower() == 'mint' or text.lower() == 'average' or text.lower() == 'bad' or text.lower() == 'fair':
+        if text.lower() in [condition.lower() for condition in product_conditions]:
             condition = text
-        elif text.lower() == 'unlocked' or text.lower() == 'locked':
+        elif text.lower() in [carrier.lower() for carrier in carriers]:
             carrier = text
     
     # Print product details along with condition and carrier
