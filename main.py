@@ -1,37 +1,43 @@
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
 # URL of the page with the listings
 listings_url = 'https://swappa.com/bp/sellworld/listings'
 
 # Fetch the content of the webpage
 response = requests.get(listings_url)
-
-# Use BeautifulSoup to parse the HTML content of the listings page
 soup = BeautifulSoup(response.text, 'html.parser')
 
-# Find elements containing listings. You will need to update this to match the correct class or structure.
-listings = soup.findAll('div', class_='listings')  # Update with correct class for listings
+# Find elements containing listings
+listings = soup.find_all('div', class_='listings')  # Update with correct class for listings
 
-# Iterate through the listings to get each product URL
+# Find the element containing condition information
+condition_elements = soup.find_all('p', class_='mb-2')
+# print(f'Condition elements: {condition_elements}')
+# if len(condition_elements) >= 2:
+#     condition_element = condition_elements[1]  # Selecting the second element
+# else:
+#     condition_element = None
+
+# Extract condition and carrier information
+condition = None
+carrier = None
+
+# Iterate through the listings to get each product URL and details
 for listing in listings:
-    # Find the 'a' tag with the URL for the product. You need to update this selector accordingly.
-    product_link = listing.find('a', href=True)
-    if product_link:
-        product_path = product_link['href']
-        # Adjust the product URL path
-        product_url = urljoin(listings_url, product_path.replace('/bp/sellworld/listings', ''))
-        # Make a new HTTP request to the product URL
-        product_response = requests.get(product_url)
-        product_soup = BeautifulSoup(product_response.text, 'html.parser')
-        # Find the 'div' tag for the price in the product page
-        price_div = product_soup.find('div', class_='listing_price')
-        if price_div:
-            price = price_div.text.strip()
-        else:
-            price = 'No price found'
-            print(f'Could not find price for product at URL: {product_url}')
-        # Assuming you can find the title in the listing page
-        title = listing.find('a', {'title': True}).get('title') if listing.find('a', {'title': True}) else 'No title found'
-        print(f'Title: {title}, Price: {price}')
+    # Extract product details
+    title = listing.find('span', itemprop='name').text.strip() if listing.find('span', itemprop='name') else 'Title not available'
+    price = listing.find('span', itemprop='price').text.strip() if listing.find('span', itemprop='price') else 'Price not available'
+    for element in condition_elements:
+    # Find all <span> elements within the condition element
+        span_elements = element.find_all('span')
+    # Check if the span elements contain condition and carrier information
+    for span in span_elements:
+        text = span.get_text(strip=True)
+        if text.lower() == 'good' or text.lower() == 'mint' or text.lower() == 'average' or text.lower() == 'bad' or text.lower() == 'fair':
+            condition = text
+        elif text.lower() == 'unlocked' or text.lower() == 'locked':
+            carrier = text
+    
+    # Print product details along with condition and carrier
+    print(f'Title: {title}, Price: {price}, Condition: {condition}, Carrier: {carrier}')
