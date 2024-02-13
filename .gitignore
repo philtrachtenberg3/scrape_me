@@ -1,0 +1,7 @@
+venv/
+requirements.txt
+*.pyc
+__pycache__/
+config.ini
+settings.py
+.env
